@@ -41,7 +41,7 @@ Không ghi mật khẩu vào code hay commit file `.env` (đã nằm trong `.git
 
 Dự án có sẵn `render.yaml`, `.python-version` (3.13), `.gitignore`, `requirements.txt` (flask, gunicorn) và `app.py` để chạy `gunicorn app:app`.
 
-1. Đưa mã nguồn lên một repo GitHub **để chế độ Private** (không chuyển sang Public). Khi kết nối Render, cho phép Render đọc đúng repo này.
+1. Đưa mã nguồn lên một repo GitHub. Khi kết nối Render, cho phép Render đọc đúng repo này.
 2. Trên Render: **New → Blueprint** → chọn repo. Render đọc `render.yaml` và tạo web service `coffeeshop` gói Free.
 3. Render hỏi giá trị `APP_PASSWORD` (đã khai báo `sync: false`, không nằm trong repo): nhập mật khẩu của bạn. `SECRET_KEY` được Render tự sinh.
 4. Deploy xong, mở địa chỉ `https://<tên>.onrender.com` và đăng nhập bằng `APP_PASSWORD`.
@@ -56,7 +56,7 @@ Trên Render (có biến `RENDER`) nếu thiếu `APP_PASSWORD` hoặc `SECRET_K
 
 ### Bản quyền
 
-`data/product.csv` và `data/category.csv` còn chứa mô tả và đường dẫn ảnh lấy từ website một chuỗi cà phê có thật. Tool không nạp chúng lên Render, nhưng **nếu repo chuyển sang Public thì nội dung này bị công bố**. Vì vậy repo phải luôn ở chế độ **Private**. `.gitignore` đã loại thư mục `images/`. Nếu sau này cần Public, trước đó phải bỏ cột `image`, `description` khỏi hai file CSV trong repo (không sửa bản gốc ở máy bạn).
+Ảnh món trong `images/products/` (46 file) và mô tả món lấy từ website của một chuỗi cà phê có thật nên có bản quyền của bên thứ ba. Repo này đang để **Public** và thư mục `images/` **đã được đưa lên** theo quyết định của chủ dự án, nghĩa là ai cũng tải được các ảnh đó; quyết định này trái với `data/Quyet_dinh_chu_quan.md` và rủi ro bản quyền do chủ repo tự chịu. Bản CSV trong repo vẫn để trống cột `image` và `description` (bản đầy đủ chỉ ở máy tác giả, đã đặt `skip-worktree`). Trên Render, tool **không** nạp và **không** phục vụ ảnh/mô tả (`SHOW_MEDIA` bị ép tắt). Muốn gỡ ảnh khỏi repo: chuyển repo sang Private hoặc xóa thư mục `images/`, và nhớ rằng ảnh vẫn còn trong lịch sử git.
 
 ## Phân quyền
 
@@ -95,5 +95,5 @@ coffeeshop/db.py        lược đồ SQLite, ràng buộc, trigger
 templates/, static/     giao diện
 tests/test_rules.py     kiểm thử
 data/                   CSV gốc và Quyet_dinh_chu_quan.md
-images/products/        ảnh món (chỉ dùng trên máy khi SHOW_MEDIA=1; không commit)
+images/products/        ảnh món (chỉ dùng trên máy khi SHOW_MEDIA=1; Render không dùng)
 ```
