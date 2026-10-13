@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: coffeeshop
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /login
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_PASSWORD
+        sync: false   # tự nhập trên dashboard Render, không ghi vào repo

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Đơn {{ order.ma_don }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('orders') }}">← Danh sách đơn</a></p>
+<h1>Đơn {{ order.ma_don }} {{ badge(order.trang_thai) }}</h1>
+
+<div class="card">
+  <p>
+    <strong>Thời gian:</strong> {{ order.thoi_gian }} ·
+    <strong>Phục vụ:</strong> {{ order.loai_phuc_vu }}{% if order.so_ban %} (bàn {{ order.so_ban }}){% endif %} ·
+    <strong>Thanh toán:</strong> {{ order.thanh_toan }}
+  </p>
+  {% if order.thoi_gian_hoan_thanh %}<p class="muted">Hoàn thành lúc {{ order.thoi_gian_hoan_thanh }}</p>{% endif %}
+  {% if order.ly_do_huy %}<p><strong>Lý do hủy:</strong> {{ order.ly_do_huy }}</p>{% endif %}
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Món</th><th class="num">SL</th><th class="num">Đơn giá</th><th class="num">Thành tiền</th><th>Ghi chú</th></tr></thead>
+    <tbody>
+    {% for i in items %}
+      <tr><td>{{ i.ten_mon }}</td><td class="num">{{ i.so_luong }}</td><td class="num">{{ i.don_gia | vnd }}</td>
+          <td class="num">{{ i.thanh_tien | vnd }}</td><td>{{ i.ghi_chu or '' }}</td></tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr><th colspan="3" class="num">Tổng cộng</th><th class="num">{{ order.tong_tien | vnd }}</th><th></th></tr></tfoot>
+  </table>
+  </div>
+</div>
+
+{% if transitions %}
+<div class="card">
+  <h2>Xử lý đơn</h2>
+  <div class="status-actions">
+    {% if 'Đang pha chế' in transitions %}
+      <form method="post" action="{{ url_for('order_status', ma_don=order.ma_don) }}" class="inline-form">
+        <input type="hidden" name="trang_thai" value="Đang pha chế"><button>Bắt đầu pha chế</button></form>
+    {% endif %}
+    {% if 'Hoàn thành' in transitions %}
+      <form method="post" action="{{ url_for('order_status', ma_don=order.ma_don) }}" class="inline-form">
+        <input type="hidden" name="trang_thai" value="Hoàn thành"><button>Hoàn thành</button></form>
+    {% endif %}
+    <form method="post" action="{{ url_for('order_status', ma_don=order.ma_don) }}" class="status-actions">
+      <input type="hidden" name="trang_thai" value="Đã hủy">
+      <div><label for="ly_do">Lý do hủy (bắt buộc)</label><input id="ly_do" name="ly_do" maxlength="200" required></div>
+      <button class="danger">Hủy đơn</button>
+    </form>
+  </div>
+</div>
+{% else %}
+<p class="muted">Đơn đã kết thúc nên không thể sửa hoặc xóa.</p>
+{% endif %}
+{% endblock %}

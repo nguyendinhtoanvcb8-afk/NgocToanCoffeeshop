@@ -1,0 +1,4 @@
+{% macro badge(status) -%}
+{%- set cls = {'Mới': 'moi', 'Đang pha chế': 'pha', 'Hoàn thành': 'xong', 'Đã hủy': 'huy'}[status] -%}
+<span class="badge {{ cls }}">{{ status }}</span>
+{%- endmacro %}

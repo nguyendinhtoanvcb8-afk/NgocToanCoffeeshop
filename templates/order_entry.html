@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %}Gọi món{% endblock %}
+{% block content %}
+<h1>Gọi món</h1>
+<div class="entry">
+  <section>
+    <div class="tabs" id="tabs"></div>
+    <div class="products" id="products"></div>
+  </section>
+
+  <aside class="card cart" id="cart">
+    <h2>Đơn đang gọi</h2>
+    <div id="lines"><p class="muted">Chưa có món nào. Bấm vào món để thêm.</p></div>
+    <div class="opts">
+      <div class="full">
+        <label>Loại phục vụ</label>
+        <select id="loai">{% for s in service_types %}<option>{{ s }}</option>{% endfor %}</select>
+      </div>
+      <div id="ban-box">
+        <label for="ban">Số bàn</label>
+        <select id="ban"><option value="">– Chọn bàn –</option>{% for t in tables %}<option value="{{ t }}">{{ t }}</option>{% endfor %}</select>
+      </div>
+      <div>
+        <label for="tt">Thanh toán</label>
+        <select id="tt">{% for p in payments %}<option>{{ p }}</option>{% endfor %}</select>
+      </div>
+    </div>
+    <div class="total"><span>Tổng cộng</span><span id="total">0 đ</span></div>
+    <div class="err" id="err" role="alert"></div>
+    <button id="submit" style="width:100%">Tạo đơn</button>
+  </aside>
+</div>
+
+<script>
+const PRODUCTS = {{ products | tojson }};
+const CATEGORIES = {{ categories | tojson }};
+const NOTE_MAX = 100, QTY_MAX = 99;
+const QUICK_NOTES = ["ít đá", "ít ngọt", "không đá", "thêm sữa"];
+let activeCat = null;
+let cart = [];   // {id, name, price, qty, note}
+
+const $ = id => document.getElementById(id);
+const money = n => n.toLocaleString("vi-VN") + " đ";
+function el(tag, props = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") e.className = v; else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e[k] = v;
+  }
+  kids.forEach(k => e.append(k));
+  return e;
+}
+
+function renderTabs() {
+  const box = $("tabs"); box.replaceChildren();
+  const all = [{id: null, name: "Tất cả"}, ...CATEGORIES];
+  all.forEach(c => box.append(el("button", {class: activeCat === c.id ? "on" : "", type: "button",
+    textContent: c.name, onclick: () => { activeCat = c.id; renderTabs(); renderProducts(); }})));
+}
+
+function renderProducts() {
+  const box = $("products"); box.replaceChildren();
+  PRODUCTS.filter(p => activeCat === null || p.category_id === activeCat).forEach(p => {
+    const card = el("button", {class: "prod", type: "button", onclick: () => addToCart(p)});
+    if (p.image) {
+      const img = el("img", {alt: "", loading: "lazy", src: "/media/" + p.image.split("/").pop()});
+      img.addEventListener("error", () => img.remove());
+      card.append(img);
+    }
+    card.append(el("span", {class: "n", textContent: p.name}), el("span", {class: "p", textContent: money(p.price)}));
+    box.append(card);
+  });
+}
+
+function addToCart(p) {
+  const found = cart.find(l => l.id === p.id && !l.note);
+  if (found && found.qty < QTY_MAX) found.qty++;
+  else cart.push({id: p.id, name: p.name, price: p.price, qty: 1, note: ""});
+  renderCart();
+}
+
+function renderCart() {
+  const box = $("lines"); box.replaceChildren();
+  if (!cart.length) box.append(el("p", {class: "muted", textContent: "Chưa có món nào. Bấm vào món để thêm."}));
+  cart.forEach((l, i) => {
+    const qty = el("input", {type: "text", inputMode: "numeric", value: String(l.qty), ariaLabel: "Số lượng " + l.name});
+    qty.addEventListener("input", () => { l.qty = qty.value.trim() === "" ? NaN : Number(qty.value); updateTotal(); });
+    qty.addEventListener("change", () => renderCart());
+    const note = el("input", {class: "note", type: "text", maxLength: NOTE_MAX, placeholder: "Ghi chú (ví dụ: ít đá)", value: l.note});
+    note.addEventListener("input", () => { l.note = note.value; });
+    const chips = el("div", {class: "chips"});
+    QUICK_NOTES.forEach(t => chips.append(el("button", {type: "button", textContent: t,
+      class: l.note.split(", ").includes(t) ? "on" : "",
+      onclick: () => {
+        const parts = l.note ? l.note.split(", ").filter(Boolean) : [];
+        const at = parts.indexOf(t);
+        if (at >= 0) parts.splice(at, 1); else parts.push(t);
+        l.note = parts.join(", "); renderCart();
+      }})));
+    box.append(el("div", {class: "line"},
+      el("div", {class: "top"}, el("strong", {textContent: l.name}),
+        el("span", {textContent: Number.isFinite(l.qty) ? money(l.qty * l.price) : "—"})),
+      el("div", {class: "qty"},
+        el("button", {type: "button", class: "small secondary", textContent: "−", ariaLabel: "Giảm", onclick: () => { l.qty = Math.max(1, (Number(l.qty) || 1) - 1); renderCart(); }}),
+        qty,
+        el("button", {type: "button", class: "small secondary", textContent: "+", ariaLabel: "Tăng", onclick: () => { l.qty = Math.min(QTY_MAX, (Number(l.qty) || 0) + 1); renderCart(); }}),
+        el("span", {class: "muted", textContent: "× " + money(l.price)}),
+        el("button", {type: "button", class: "small danger", textContent: "Bỏ", style: "margin-left:auto", onclick: () => { cart.splice(i, 1); renderCart(); }})),
+      chips, note));
+  });
+  updateTotal();
+}
+
+function updateTotal() {
+  const t = cart.reduce((s, l) => s + (Number.isFinite(l.qty) ? l.qty * l.price : 0), 0);
+  $("total").textContent = money(t);
+}
+
+function validate() {
+  if (!cart.length) return "Đơn phải có ít nhất 1 món";
+  for (const l of cart) {
+    if (!Number.isInteger(l.qty) || l.qty < 1 || l.qty > QTY_MAX)
+      return `Số lượng của "${l.name}" phải là số nguyên từ 1 đến ${QTY_MAX}`;
+    if (l.note.length > NOTE_MAX) return `Ghi chú của "${l.name}" tối đa ${NOTE_MAX} ký tự`;
+  }
+  if ($("loai").value === "Tại quán" && !$("ban").value) return "Đơn Tại quán bắt buộc chọn số bàn (1–12)";
+  return "";
+}
+
+$("loai").addEventListener("change", () => {
+  const dine = $("loai").value === "Tại quán";
+  $("ban-box").style.display = dine ? "" : "none";
+  if (!dine) $("ban").value = "";
+});
+
+$("submit").addEventListener("click", async () => {
+  const msg = validate();
+  $("err").className = "err";
+  $("err").textContent = msg;
+  if (msg) return;
+  $("submit").disabled = true;
+  try {
+    const res = await fetch("/api/orders", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        loai_phuc_vu: $("loai").value, so_ban: $("ban").value || null, thanh_toan: $("tt").value,
+        items: cart.map(l => ({mon_id: l.id, so_luong: l.qty, ghi_chu: l.note}))
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) { location.href = "/login?next=/goi-mon"; return; }   // phiên hết hạn
+    if (!res.ok) { $("err").textContent = data.error || "Không tạo được đơn"; return; }
+    cart = []; $("ban").value = ""; renderCart();
+    const link = el("a", {href: "/don-hang/" + data.ma_don, textContent: data.ma_don});
+    $("err").replaceChildren("Đã tạo đơn ", link, " – " + money(data.tong_tien));
+    $("err").className = "err ok";
+  } catch (e) {
+    $("err").textContent = "Không kết nối được tới máy chủ. Kiểm tra tool còn chạy rồi thử lại (giỏ hàng vẫn được giữ).";
+  } finally { $("submit").disabled = false; }
+});
+
+renderTabs(); renderProducts(); renderCart(); $("loai").dispatchEvent(new Event("change"));
+</script>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Tổng quan{% endblock %}
+{% block content %}
+<h1>Tổng quan</h1>
+
+<form class="card filters" method="get">
+  <div><label for="thang">Tháng</label>
+    <select id="thang" name="thang" onchange="this.form.submit()">
+      {% for m in months %}<option value="{{ m }}" {{ 'selected' if m == r.month }}>{{ m[5:] }}/{{ m[:4] }}</option>{% endfor %}
+    </select></div>
+  <div class="muted">Doanh thu hôm nay ({{ today }}): <strong>{{ today_revenue | vnd }}</strong></div>
+</form>
+
+<div class="grid-kpi">
+  <div class="kpi"><div class="v">{{ r.don_hoan_thanh }}</div><div class="l">Đơn hoàn thành</div></div>
+  <div class="kpi"><div class="v">{{ r.doanh_thu | vnd }}</div><div class="l">Doanh thu</div></div>
+  <div class="kpi"><div class="v">{{ r.trung_binh | vnd }}</div><div class="l">Giá trị trung bình mỗi đơn</div></div>
+  <div class="kpi"><div class="v">{{ '%.1f' | format(r.ty_le_huy) | replace('.', ',') }}%</div>
+    <div class="l">Tỷ lệ hủy ({{ r.don_huy }}/{{ r.tong_don }} đơn)</div></div>
+</div>
+
+<div class="two-col">
+  <section class="card">
+    <h2>Top 5 món (theo số ly)</h2>
+    {% set mx = (r.top5 | map(attribute='so_ly') | max) if r.top5 else 1 %}
+    {% for t in r.top5 %}
+      <div class="bar-row"><span class="name" title="{{ t.name }}">{{ loop.index }}. {{ t.name }}</span>
+        <span class="bar"><i style="width:{{ t.so_ly / mx * 100 }}%"></i></span>
+        <span class="val">{{ t.so_ly }} ly · {{ t.doanh_thu | vnd }}</span></div>
+    {% else %}<p class="muted">Chưa có dữ liệu.</p>{% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Doanh thu theo danh mục</h2>
+    {% set mc = (r.theo_danh_muc | map(attribute='doanh_thu') | max) or 1 %}
+    {% for c in r.theo_danh_muc %}
+      <div class="bar-row"><span class="name">{{ c.name }}</span>
+        <span class="bar"><i style="width:{{ c.doanh_thu / mc * 100 }}%"></i></span>
+        <span class="val">{{ c.doanh_thu | vnd }}</span></div>
+    {% endfor %}
+  </section>
+</div>
+
+<section class="card">
+  <h2>Doanh thu theo ngày</h2>
+  {% set md = (r.theo_ngay | max) or 1 %}
+  <div class="cols">{% for v in r.theo_ngay %}<div class="c" style="height:{{ v / md * 100 }}%" title="Ngày {{ loop.index }}: {{ v | vnd }}"></div>{% endfor %}</div>
+  <div class="cols-labels">{% for v in r.theo_ngay %}<span>{{ loop.index if loop.index is odd else '' }}</span>{% endfor %}</div>
+</section>
+
+<section class="card">
+  <h2>Doanh thu theo giờ trong ngày</h2>
+  {% set mh = (r.theo_gio | max) or 1 %}
+  <div class="cols">{% for v in r.theo_gio %}<div class="c" style="height:{{ v / mh * 100 }}%" title="{{ loop.index0 }}h: {{ v | vnd }}"></div>{% endfor %}</div>
+  <div class="cols-labels">{% for v in r.theo_gio %}<span>{{ loop.index0 }}</span>{% endfor %}</div>
+</section>
+{% endblock %}

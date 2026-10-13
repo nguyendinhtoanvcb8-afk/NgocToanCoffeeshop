@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Thực đơn{% endblock %}
+{% block content %}
+<h1>Thực đơn</h1>
+
+<div class="card">
+  <form class="filters" method="get">
+    <div><label for="dm">Danh mục</label>
+      <select id="dm" name="dm" onchange="this.form.submit()"><option value="">Tất cả</option>
+        {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if cat == c.id }}>{{ c.name }}</option>{% endfor %}</select></div>
+  </form>
+</div>
+
+{% if role == 'manager' %}
+<form class="card filters" method="post" action="{{ url_for('menu_add') }}">
+  <div style="flex:2;min-width:200px"><label for="n-name">Tên món mới</label><input id="n-name" name="name" maxlength="80" required style="width:100%"></div>
+  <div><label for="n-price">Giá (đ)</label><input id="n-price" name="price" inputmode="numeric" placeholder="39000" required></div>
+  <div><label for="n-cat">Danh mục</label>
+    <select id="n-cat" name="category_id">{% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+  <div><button>Thêm món</button></div>
+</form>
+{% endif %}
+
+<div class="card">
+  <div class="table-wrap">
+  <table>
+    <thead><tr>
+      {% if show_media %}<th></th>{% endif %}
+      <th>Tên món</th><th>Danh mục</th><th class="num">Giá</th><th>Trạng thái</th>{% if role == 'manager' %}<th>Thao tác</th>{% endif %}
+    </tr></thead>
+    <tbody>
+    {% for p in products if not cat or p.category_id == cat %}
+      <tr class="{{ '' if p.dang_ban else 'off' }}">
+        {% if show_media %}<td style="width:64px">{% if p.image %}<img src="{{ url_for('media', filename=p.image.split('/')[-1]) }}" alt="" width="56" height="42" style="object-fit:cover;border-radius:6px" onerror="this.remove()">{% endif %}</td>{% endif %}
+        <td>
+          {% if role == 'manager' %}
+          <form method="post" action="{{ url_for('menu_edit', pid=p.id) }}" class="filters" id="f{{ p.id }}">
+            <input name="name" value="{{ p.name }}" maxlength="80" required aria-label="Tên món" style="min-width:180px">
+          </form>
+          {% else %}<strong>{{ p.name }}</strong>{% endif %}
+          {% if show_media %}<div class="muted" style="font-size:.85rem">{{ p.description or 'Mô tả đang được cập nhật.' }}</div>{% endif %}
+        </td>
+        <td>
+          {% if role == 'manager' %}
+          <select name="category_id" form="f{{ p.id }}" aria-label="Danh mục">
+            {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if c.id == p.category_id }}>{{ c.name }}</option>{% endfor %}</select>
+          {% else %}{{ p.ten_dm }}{% endif %}
+        </td>
+        <td class="num">
+          {% if role == 'manager' %}<input name="price" form="f{{ p.id }}" value="{{ p.price }}" inputmode="numeric" aria-label="Giá" style="width:110px;text-align:right">
+          {% else %}{{ p.price | vnd }}{% endif %}
+        </td>
+        <td>{% if p.dang_ban %}<span class="badge xong">Đang bán</span>{% else %}<span class="badge off">Tạm ngưng</span>{% endif %}</td>
+        {% if role == 'manager' %}
+        <td>
+          <button class="small" form="f{{ p.id }}">Lưu</button>
+          <form class="inline-form" method="post" action="{{ url_for('menu_toggle', pid=p.id) }}">
+            <input type="hidden" name="dang_ban" value="{{ 0 if p.dang_ban else 1 }}">
+            <button class="small secondary">{{ 'Tạm ngưng' if p.dang_ban else 'Bán lại' }}</button></form>
+          {% if p.so_dong_don == 0 %}
+          <form class="inline-form" method="post" action="{{ url_for('menu_delete', pid=p.id) }}" onsubmit="return confirm('Xóa món này?')">
+            <button class="small danger">Xóa</button></form>
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if role == 'manager' %}<p class="muted">Giá là số nguyên, bội số của 1.000 đ. Giá mới chỉ áp dụng cho đơn tạo sau đó; món đã có trong đơn không xóa được, chỉ tạm ngưng.</p>{% endif %}
+</div>
+{% endblock %}

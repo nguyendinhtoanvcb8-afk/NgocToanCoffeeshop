@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Đơn hàng{% endblock %}
+{% block content %}
+<h1>Đơn hàng</h1>
+<form class="card filters" method="get">
+  <div><label for="tu">Từ ngày</label><input id="tu" type="date" name="tu" value="{{ f.tu }}"></div>
+  <div><label for="den">Đến ngày</label><input id="den" type="date" name="den" value="{{ f.den }}"></div>
+  <div><label for="st">Trạng thái</label>
+    <select id="st" name="trang_thai"><option value="">Tất cả</option>
+      {% for s in statuses %}<option {{ 'selected' if f.trang_thai == s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label for="lo">Loại phục vụ</label>
+    <select id="lo" name="loai"><option value="">Tất cả</option>
+      {% for s in service_types %}<option {{ 'selected' if f.loai == s }}>{{ s }}</option>{% endfor %}</select></div>
+  <div><label for="q">Mã đơn</label><input id="q" name="q" value="{{ f.q }}" placeholder="CS-260915-001"></div>
+  <div><button>Lọc</button> <a class="btn secondary" href="{{ url_for('orders') }}">Hôm nay</a></div>
+</form>
+
+<div class="card">
+  <p class="muted">{{ total }} đơn{% if not f.tu and not f.den %} (tất cả các ngày){% endif %} · trang {{ page }}/{{ pages }}. Đơn đang xử lý được xếp lên đầu.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Mã đơn</th><th>Thời gian</th><th>Phục vụ</th><th>Thanh toán</th><th>Trạng thái</th><th class="num">Tổng tiền</th></tr></thead>
+    <tbody>
+    {% for o in rows %}
+      <tr>
+        <td><a href="{{ url_for('order_detail', ma_don=o.ma_don) }}">{{ o.ma_don }}</a></td>
+        <td>{{ o.thoi_gian }}</td>
+        <td>{{ o.loai_phuc_vu }}{% if o.so_ban %} · bàn {{ o.so_ban }}{% endif %}</td>
+        <td>{{ o.thanh_toan }}</td>
+        <td>{{ badge(o.trang_thai) }}</td>
+        <td class="num">{{ o.tong_tien | vnd }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="muted">Không có đơn nào.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if pages > 1 %}
+  <div class="pager">
+    {% set base = {'tu': f.tu, 'den': f.den, 'trang_thai': f.trang_thai, 'loai': f.loai, 'q': f.q} %}
+    {% if page > 1 %}<a class="btn secondary small" href="{{ url_for('orders', page=page-1, **base) }}">← Trước</a>{% endif %}
+    <span>Trang {{ page }}/{{ pages }}</span>
+    {% if page < pages %}<a class="btn secondary small" href="{{ url_for('orders', page=page+1, **base) }}">Sau →</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

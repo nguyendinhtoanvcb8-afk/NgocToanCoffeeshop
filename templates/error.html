@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card"><h1>{{ title }}</h1><p>{{ message }}</p><a class="btn" href="{{ url_for('order_entry') }}">Về trang Gọi món</a></div>
+{% endblock %}

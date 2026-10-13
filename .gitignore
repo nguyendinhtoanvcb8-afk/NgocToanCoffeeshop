@@ -1,0 +1,10 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.db
+*.db-journal
+*.db.secret
+.env
+# Ảnh món lấy từ website của một chuỗi cà phê có thật: không đưa lên Internet.
+images/
