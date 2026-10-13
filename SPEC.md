@@ -16,10 +16,10 @@ Tool web nhỏ cho một quán: gọi món, xử lý đơn, quản lý thực đ
 | Nạp dữ liệu | Script khởi tạo đọc CSV, **không sửa file CSV gốc** |
 | Local | Chạy một lệnh; bật hiển thị ảnh và mô tả |
 | Render (Internet) | Gắn persistent disk để giữ file SQLite; không nạp mô tả và đường dẫn ảnh; không đưa thư mục `images/` lên |
-| Cờ cấu hình | `SHOW_MEDIA` (bật ở local, tắt ở Render) |
+| Cờ cấu hình | `SHOW_MEDIA` (bật ở local; trên Render mặc định tắt, `render.yaml` đặt `1` để hiện ảnh) |
 | Biến môi trường | `APP_PASSWORD` (mật khẩu đăng nhập, quyền quản lý), `CASHIER_PASSWORD` (tùy chọn, thêm vai trò thu ngân), `SECRET_KEY`, `RENDER` (do Render đặt) |
 | Chạy trên máy | Không đặt `APP_PASSWORD` thì không có đăng nhập, toàn quyền |
-| Chạy trên Render | Thiếu `APP_PASSWORD` hoặc `SECRET_KEY` thì dừng với lỗi rõ ràng; `SHOW_MEDIA` luôn tắt; gói Free không có disk nên DB nạp lại từ CSV mỗi lần khởi động |
+| Chạy trên Render | Thiếu `APP_PASSWORD` hoặc `SECRET_KEY` thì dừng với lỗi rõ ràng; `SHOW_MEDIA` mặc định tắt (chỉ bật khi đặt rõ `SHOW_MEDIA=1`); gói Free không có disk nên DB nạp lại từ CSV mỗi lần khởi động |
 
 Script nạp phải chạy lặp lại được: chỉ nạp khi DB trống, không nhân đôi dữ liệu.
 

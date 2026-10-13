@@ -9,5 +9,7 @@ services:
     envVars:
       - key: SECRET_KEY
         generateValue: true
+      - key: SHOW_MEDIA
+        value: "1"    # hiện ảnh món (có bản quyền bên thứ ba, chủ dự án chấp nhận). Xóa dòng này hoặc đặt "0" để tắt.
       - key: APP_PASSWORD
         sync: false   # tự nhập trên dashboard Render, không ghi vào repo

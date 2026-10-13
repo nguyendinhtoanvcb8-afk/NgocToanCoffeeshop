@@ -31,7 +31,7 @@ APP_PASSWORD=mat-khau-cua-ban python run.py               # bash
 | `APP_PASSWORD` | Mật khẩu đăng nhập (quyền **quản lý**). Bỏ trống: trên máy thì không hỏi mật khẩu; **trên Render thì bắt buộc** |
 | `SECRET_KEY` | Khóa ký cookie đăng nhập. **Bắt buộc trên Render.** Trên máy bỏ trống thì tự sinh và lưu ở `coffeeshop.db.secret` để khởi động lại không bị đăng xuất |
 | `CASHIER_PASSWORD` | Tùy chọn. Chỉ dùng cùng `APP_PASSWORD`: thêm một mật khẩu thứ hai cho vai trò **thu ngân** (không sửa được thực đơn) |
-| `SHOW_MEDIA` | Chỉ trên máy: `1` (mặc định) nạp và hiện ảnh + mô tả món, `0` bỏ hẳn. Trên Render luôn bị ép về tắt |
+| `SHOW_MEDIA` | Chỉ trên máy: `1` nạp và hiện ảnh + mô tả món, `0` bỏ hẳn. Mặc định: bật trên máy, **tắt trên Render**; `render.yaml` đặt sẵn `SHOW_MEDIA=1` nên bản Render đang hiện ảnh (đổi thành `0` hoặc xóa biến để tắt) |
 | `DATABASE_PATH` | Đường dẫn file SQLite (mặc định `coffeeshop.db`) |
 | `PORT` | Cổng khi chạy `run.py` (mặc định 5000) |
 
@@ -46,7 +46,7 @@ Dự án có sẵn `render.yaml`, `.python-version` (3.13), `.gitignore`, `requi
 3. Render hỏi giá trị `APP_PASSWORD` (đã khai báo `sync: false`, không nằm trong repo): nhập mật khẩu của bạn. `SECRET_KEY` được Render tự sinh.
 4. Deploy xong, mở địa chỉ `https://<tên>.onrender.com` và đăng nhập bằng `APP_PASSWORD`.
 
-Trên Render (có biến `RENDER`) nếu thiếu `APP_PASSWORD` hoặc `SECRET_KEY`, ứng dụng **dừng ngay** với thông báo `LỖI CẤU HÌNH: … thiếu biến môi trường: …` và deploy báo thất bại. Trên Render mô tả món và đường dẫn ảnh **không bao giờ** được nạp vào database.
+Trên Render (có biến `RENDER`) nếu thiếu `APP_PASSWORD` hoặc `SECRET_KEY`, ứng dụng **dừng ngay** với thông báo `LỖI CẤU HÌNH: … thiếu biến môi trường: …` và deploy báo thất bại. Trên Render ảnh món **hiển thị** (do `render.yaml` đặt `SHOW_MEDIA=1`); mô tả món vẫn trống vì CSV trong repo không chứa mô tả.
 
 ### Giới hạn của gói Free (đọc kỹ)
 
@@ -56,7 +56,7 @@ Trên Render (có biến `RENDER`) nếu thiếu `APP_PASSWORD` hoặc `SECRET_K
 
 ### Bản quyền
 
-Ảnh món trong `images/products/` (46 file) và mô tả món lấy từ website của một chuỗi cà phê có thật nên có bản quyền của bên thứ ba. Repo này đang để **Public** và thư mục `images/` **đã được đưa lên** theo quyết định của chủ dự án, nghĩa là ai cũng tải được các ảnh đó; quyết định này trái với `data/Quyet_dinh_chu_quan.md` và rủi ro bản quyền do chủ repo tự chịu. Bản CSV trong repo vẫn để trống cột `image` và `description` (bản đầy đủ chỉ ở máy tác giả, đã đặt `skip-worktree`). Trên Render, tool **không** nạp và **không** phục vụ ảnh/mô tả (`SHOW_MEDIA` bị ép tắt). Muốn gỡ ảnh khỏi repo: chuyển repo sang Private hoặc xóa thư mục `images/`, và nhớ rằng ảnh vẫn còn trong lịch sử git.
+Ảnh món trong `images/products/` (46 file) và mô tả món lấy từ website của một chuỗi cà phê có thật nên có bản quyền của bên thứ ba. Repo này đang để **Public** và thư mục `images/` **đã được đưa lên** theo quyết định của chủ dự án, nghĩa là ai cũng tải được các ảnh đó; quyết định này trái với `data/Quyet_dinh_chu_quan.md` và rủi ro bản quyền do chủ repo tự chịu. Bản CSV trong repo chứa đường dẫn ảnh nhưng để trống cột `description` (bản đầy đủ chỉ ở máy tác giả, đã đặt `skip-worktree`). Trên Render ảnh được phục vụ cho người đã đăng nhập khi `SHOW_MEDIA=1`; đổi biến này thành `0` để tắt ngay mà không cần sửa code. Muốn gỡ ảnh khỏi repo: chuyển repo sang Private hoặc xóa thư mục `images/`, và nhớ rằng ảnh vẫn còn trong lịch sử git.
 
 ## Phân quyền
 
@@ -95,5 +95,5 @@ coffeeshop/db.py        lược đồ SQLite, ràng buộc, trigger
 templates/, static/     giao diện
 tests/test_rules.py     kiểm thử
 data/                   CSV gốc và Quyet_dinh_chu_quan.md
-images/products/        ảnh món (chỉ dùng trên máy khi SHOW_MEDIA=1; Render không dùng)
+images/products/        ảnh món (hiện khi SHOW_MEDIA=1)
 ```

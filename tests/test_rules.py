@@ -246,6 +246,26 @@ class LoginConfigTests(Base):
         page = c.get("/thuc-don").get_data(as_text=True)
         self.assertNotIn("<img", page)
 
+    def test_render_shows_images_only_when_explicitly_enabled(self):
+        # Mặc định (không đặt SHOW_MEDIA trong Environment) đã được kiểm ở test trước: tắt.
+        app = self.make("media.db", RENDER=True, MANAGER_PASSWORD="pw", SECRET_KEY="k", RENDER_ALLOW_MEDIA=True)
+        self.assertTrue(app.config["SHOW_MEDIA"])
+        conn = sqlite3.connect(Path(self.dir.name) / "media.db")
+        self.assertEqual(conn.execute("SELECT COUNT(*) FROM product WHERE image IS NOT NULL").fetchone()[0], 46)
+        conn.close()
+        c = app.test_client()
+        self.assertEqual(c.get("/media/Cold_Brew.jpg").status_code, 302)          # vẫn cần đăng nhập
+        c.post("/login", data={"password": "pw"})
+        r = c.get("/media/Cold_Brew.jpg")
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.mimetype.startswith("image/"))
+        self.assertIn("<img", c.get("/thuc-don").get_data(as_text=True))
+        r.close()
+
+    def test_render_yaml_enables_media_explicitly(self):
+        yml = (ROOT / "render.yaml").read_text(encoding="utf-8")
+        self.assertRegex(yml, r'key: SHOW_MEDIA\s*\n\s*value: "1"')
+
     def test_wsgi_entrypoint_fails_clearly_on_render_without_env(self):
         import os
         import subprocess

@@ -33,6 +33,8 @@ def create_app(config=None):
         DATA_DIR=str(BASE_DIR / "data"),
         IMAGE_DIR=str(BASE_DIR / "images" / "products"),
         SHOW_MEDIA=_env_flag("SHOW_MEDIA", "1"),
+        # Trên Render ảnh mặc định TẮT; chỉ bật khi đặt rõ SHOW_MEDIA=1 trong Environment.
+        RENDER_ALLOW_MEDIA=_env_flag("SHOW_MEDIA", "0"),
         MANAGER_PASSWORD=os.environ.get("APP_PASSWORD", ""),
         CASHIER_PASSWORD=os.environ.get("CASHIER_PASSWORD", ""),
         SECRET_KEY=os.environ.get("SECRET_KEY") or None,
@@ -53,8 +55,9 @@ def create_app(config=None):
             raise RuntimeError(
                 f"Đang chạy trên Render nhưng thiếu biến môi trường: {', '.join(missing)}. "
                 "Vào Render → Environment để đặt rồi deploy lại.")
-        # Nội dung mô tả và ảnh có bản quyền: không bao giờ nạp lên Internet.
-        app.config["SHOW_MEDIA"] = False
+        # Ảnh/mô tả có bản quyền bên thứ ba: trên Render mặc định tắt, chỉ bật khi chủ dự án
+        # đặt rõ SHOW_MEDIA=1 (chấp nhận rủi ro bản quyền).
+        app.config["SHOW_MEDIA"] = bool(app.config["RENDER_ALLOW_MEDIA"])
     if app.config["CASHIER_PASSWORD"] and not app.config["MANAGER_PASSWORD"]:
         raise RuntimeError("CASHIER_PASSWORD chỉ dùng được khi đã đặt APP_PASSWORD.")
     # Không đặt APP_PASSWORD (chạy trên máy cá nhân) => không hỏi mật khẩu, toàn quyền.
